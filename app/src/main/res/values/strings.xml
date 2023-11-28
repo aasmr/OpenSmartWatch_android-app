@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">OpenSmartWatch</string>
+    <string name="title_activity_device_list">DeviceListActivity</string>
+    <string name="title_activity_scan_device">ScanDeviceActivity</string>
 </resources>

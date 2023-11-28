@@ -1,12 +1,5 @@
 package com.aasmr.opensmartwatch
 
-import android.Manifest
-import android.annotation.SuppressLint
-import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
-import android.content.Context
-import android.content.Intent
-import android.content.pm.PackageManager
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -17,12 +10,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.core.app.ActivityCompat
 import com.aasmr.opensmartwatch.ui.theme.OpenSmartWatchTheme
 
-private const val ENABLE_BLUETOOTH_REQUEST_CODE = 1
-
-class MainActivity : ComponentActivity() {
+class ScanDeviceActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -32,7 +22,7 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    ScanDeviceView()
                 }
             }
         }
@@ -40,19 +30,13 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun ScanDeviceView(modifier: Modifier = Modifier) {
 }
 
-@Preview(
-    showBackground = true,
-    showSystemUi = true)
+@Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun ScanDeviceViewPreview() {
     OpenSmartWatchTheme {
-        Greeting("Android")
+        ScanDeviceView()
     }
 }

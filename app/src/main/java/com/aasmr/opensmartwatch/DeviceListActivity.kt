@@ -6,8 +6,13 @@ import android.os.Bundle
 import android.content.Intent
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
@@ -31,9 +36,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 //import androidx.core.content.ContextCompat.startActivity
 import com.aasmr.opensmartwatch.ui.theme.OpenSmartWatchTheme
+
+data class Device(val name: String, val macAddress: String, val status: String, val batteryLevel: Int)
 
 class DeviceListActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -53,7 +64,9 @@ class DeviceListActivity : AppCompatActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DeviceListView(modifier: Modifier = Modifier, context: Context? = null) {
+fun DeviceListView(modifier: Modifier = Modifier,
+                   context: Context? = null,
+                   devices:List<Device> ){
     var stateMenu by remember { mutableStateOf(false) }
     val snackbarHostState = remember { SnackbarHostState() }
     val scope = rememberCoroutineScope()
@@ -93,10 +106,37 @@ fun DeviceListView(modifier: Modifier = Modifier, context: Context? = null) {
             }
         )
         { innerPadding ->
-            Text(
+            LazyColumn(
                 modifier = Modifier
-                    .padding(innerPadding), text = "Нет подключённых устройств"
-            )
+                    .padding(innerPadding)
+                    .fillMaxWidth()
+            ) {
+                items(devices) { device ->
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                            .clickable { } // Вызов метода обратного вызова// Обработчик клика на элементе списка
+                    ) {
+                        androidx.compose.material.Text(
+                            text = device.name ?: "Unknown Device",
+                            style = TextStyle(fontSize = 20.sp, fontWeight = FontWeight.Bold)
+                        )
+                        androidx.compose.material.Text(
+                            text = device.macAddress ?: "Unknown MAC Address",
+                            style = TextStyle(fontSize = 12.sp, color = Color.Gray)
+                        )
+                        androidx.compose.material.Text(
+                            text = "Статус: ${device.status}",
+                            style = TextStyle(fontSize = 14.sp)
+                        )
+                        androidx.compose.material.Text(
+                            text = "${device.batteryLevel}",
+                            style = TextStyle(fontSize = 14.sp)
+                        )
+                    }
+                }
+            }
         }
     }
 }

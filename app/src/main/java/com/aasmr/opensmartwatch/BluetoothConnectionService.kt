@@ -42,6 +42,7 @@ class BluetoothConnectionService : Service() {
         // Проверяем разрешение на использование Bluetooth
         if (requiredPermissions.any { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
             bluetoothGatt = device.connectGatt(this, false, gattCallback)
+            connectedDevice = device
 
         } else {
             Log.e(TAG, "Bluetooth permission is not granted")
@@ -66,19 +67,54 @@ class BluetoothConnectionService : Service() {
             if (newState == BluetoothProfile.STATE_CONNECTED) {
                 Log.d(TAG, "Connected to GATT server.")
                 gatt?.discoverServices()
+            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+                Log.d(TAG, "Disconnected from GATT server.")
+                // Остановка таймера при разъединении
+                timer?.cancel()
+                timer = null
+                reconnectToDevice()
+            }
+        }
+
+        @SuppressLint("MissingPermission")
+        override fun onServicesDiscovered(gatt: BluetoothGatt?, status: Int) {
+            super.onServicesDiscovered(gatt, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                connectedDevice?.createBond()
                 // Запуск таймера при успешном соединении
                 timer = fixedRateTimer(name = "timer", initialDelay = 0, period = 1800000) {
                     sendTimeRequest()
                 }
-            } else if (newState == BluetoothProfile.STATE_DISCONNECTED) {
+            } else if (status == BluetoothGatt.GATT_FAILURE) {
                 Log.d(TAG, "Disconnected from GATT server.")
                 // Остановка таймера при разъединении
                 timer?.cancel()
                 timer = null
             }
         }
-    }
 
+        override fun onCharacteristicWrite(
+            gatt: BluetoothGatt?,
+            characteristic: BluetoothGattCharacteristic?,
+            status: Int
+        ) {
+            super.onCharacteristicWrite(gatt, characteristic, status)
+            if (status == BluetoothGatt.GATT_SUCCESS) {
+                Log.d(TAG, "Write characteristic success")
+            }
+            else if (status == BluetoothGatt.GATT_FAILURE) {
+                Log.e(TAG, "Write characteristic failure")
+            }
+        }
+    }
+    private fun reconnectToDevice() {
+        // Переподключение к устройству
+        if (connectedDevice != null) {
+            connectToDevice(connectedDevice!!)
+        } else {
+            // Устройство не сохранено, выполните другие действия по вашему усмотрению, например, попытайтесь найти устройство
+        }
+    }
     private fun sendTimeRequest() {
         if (requiredPermissions.any { ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED }) {
             bluetoothGatt?.let { gatt ->
@@ -88,13 +124,17 @@ class BluetoothConnectionService : Service() {
                 if (timeCharacteristic != null) {
                     // Получить текущее системное время
                     val currentTime = System.currentTimeMillis()
-                    val totalSeconds = currentTime / 1000
+                    val timeZone = TimeZone.getDefault()
+                    val offsetInMillis = timeZone.rawOffset
 
-                    val hours = (totalSeconds / 3600).toInt()
+                    val totalSeconds = (currentTime+offsetInMillis) / 1000
+
+                    val hours = ((totalSeconds % 86400) / 3600).toInt()
                     val minutes = ((totalSeconds % 3600) / 60).toInt()
                     val seconds = (totalSeconds % 60).toInt()
                     val timeBytes = byteArrayOf(hours.toByte(), minutes.toByte(), seconds.toByte())
                     // Записать время в характеристику
+                    timeCharacteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_NO_RESPONSE
                     timeCharacteristic.value = timeBytes.clone()
                     gatt.writeCharacteristic(timeCharacteristic)
                 }
